@@ -7,4 +7,4 @@
 [![GoDoc](https://godoc.org/github.com/philchia/gohttp?status.svg)](https://godoc.org/github.com/philchia/gohttp)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
 
-gohttp is a library for golang http request
+gohttp is a lightweight and elegant http network library for Go.
