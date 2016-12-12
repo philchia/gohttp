@@ -43,29 +43,38 @@ func (m Method) String() string {
 // Client interface
 type Client interface {
 	Request(m Method, url string, parameters ...map[string]interface{}) Requester
+	RequestAdapter(adapter func(req *http.Request) *http.Request)
 }
 
 type client struct {
 	headers map[string]string
 	http.Client
+	requestAdapter func(req *http.Request) *http.Request
 }
 
 // Request will make a request use the given client
 func (c *client) Request(m Method, url string, parameters ...map[string]interface{}) Requester {
 
-	req, err := http.NewRequest(m.String(), url, nil)
+	// var parameter map[string]interface{}
+	// if len(parameters) > 0 {
+	// 	parameter = parameters[0]
+	// }
 
-	var parameter map[string]interface{}
-	if len(parameters) > 0 {
-		parameter = parameters[0]
+	req, err := http.NewRequest(m.String(), url, nil)
+	if c.requestAdapter != nil {
+		req = c.requestAdapter(req)
 	}
+
 	r := request{
-		err:        err,
-		client:     c,
-		request:    req,
-		url:        url,
-		method:     m,
-		parameters: parameter,
+		err:     err,
+		client:  c,
+		request: req,
+		url:     url,
+		method:  m,
 	}
 	return &r
+}
+
+func (c *client) RequestAdapter(adapter func(req *http.Request) *http.Request) {
+	c.requestAdapter = adapter
 }

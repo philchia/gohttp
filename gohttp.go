@@ -21,3 +21,8 @@ func init() {
 func Request(m Method, url string, parameters ...map[string]interface{}) Requester {
 	return sharedClient.Request(m, url, parameters...)
 }
+
+// RequestAdapter assign adapter to client's adapter field
+func RequestAdapter(adapter func(req *http.Request) *http.Request) {
+	sharedClient.RequestAdapter(adapter)
+}

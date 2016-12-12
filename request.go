@@ -14,13 +14,12 @@ type Requester interface {
 
 // request is the underlying struct which implement the Requester interface
 type request struct {
-	client     *client
-	err        error
-	request    *http.Request
-	url        string
-	method     Method
-	parameters map[string]interface{}
-	header     http.Header
+	client  *client
+	err     error
+	request *http.Request
+	url     string
+	method  Method
+	header  http.Header
 }
 
 // ResponseString will do the request and response with string body
