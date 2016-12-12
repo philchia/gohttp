@@ -1,6 +1,10 @@
 package gohttp
 
-import "net/http"
+import (
+	"net/http"
+	"net/url"
+	"strings"
+)
 
 // Method represent http method
 type Method int8
@@ -42,7 +46,7 @@ func (m Method) String() string {
 
 // Client interface
 type Client interface {
-	Request(m Method, url string, parameters ...map[string]interface{}) Requester
+	Request(m Method, url string, parameters ...map[string]string) Requester
 	RequestAdapter(adapter func(req *http.Request) *http.Request)
 }
 
@@ -53,14 +57,20 @@ type client struct {
 }
 
 // Request will make a request use the given client
-func (c *client) Request(m Method, url string, parameters ...map[string]interface{}) Requester {
+func (c *client) Request(m Method, urlString string, parameters ...map[string]string) Requester {
 
-	// var parameter map[string]interface{}
-	// if len(parameters) > 0 {
-	// 	parameter = parameters[0]
-	// }
+	var parameter map[string]string
+	if len(parameters) > 0 {
+		parameter = parameters[0]
+	}
 
-	req, err := http.NewRequest(m.String(), url, nil)
+	postValue := url.Values{}
+
+	for k, v := range parameter {
+		postValue.Add(k, v)
+	}
+
+	req, err := http.NewRequest(m.String(), urlString, strings.NewReader(postValue.Encode()))
 	if c.requestAdapter != nil {
 		req = c.requestAdapter(req)
 	}
@@ -69,7 +79,7 @@ func (c *client) Request(m Method, url string, parameters ...map[string]interfac
 		err:     err,
 		client:  c,
 		request: req,
-		url:     url,
+		url:     urlString,
 		method:  m,
 	}
 	return &r
