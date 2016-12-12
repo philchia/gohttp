@@ -20,8 +20,12 @@ const (
 	Delete
 	// Head represent http HEAD method
 	Head
-	// Option represent http OPTION method
-	Option
+	// Options represent http OPTION method
+	Options
+	// Patch represent http PATCH method
+	Patch
+	// Copy represent http COPY method
+	Copy
 )
 
 // String will return http method string base on the Method type
@@ -37,8 +41,12 @@ func (m Method) String() string {
 		return "DELETE"
 	case Head:
 		return "HEAD"
-	case Option:
-		return "OPTION"
+	case Options:
+		return "OPTIONS"
+	case Patch:
+		return "PATCH"
+	case Copy:
+		return "COPY"
 	default:
 		return "GET"
 	}
