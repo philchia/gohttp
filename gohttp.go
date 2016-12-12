@@ -18,7 +18,7 @@ func init() {
 }
 
 // Request will make a request use the shared client
-func Request(m Method, url string, parameters ...map[string]interface{}) Requester {
+func Request(m Method, url string, parameters ...map[string]string) Requester {
 	return sharedClient.Request(m, url, parameters...)
 }
 
