@@ -55,7 +55,27 @@ func (m Method) String() string {
 // Client interface
 type Client interface {
 	Request(m Method, url string, parameters ...map[string]string) Requester
-	RequestAdapter(adapter func(req *http.Request) *http.Request)
+	RequestAdapter(adapter func(req *http.Request) *http.Request) Client
+	HandleRedirect(flag bool) Client
+	Header(k, v string) Client
+}
+
+func NewClient(headers ...map[string]string) Client {
+	var header map[string]string
+	if len(headers) > 0 {
+		header = headers[0]
+	} else {
+		header = sharedHeaders()
+	}
+
+	return &client{
+		headers: header,
+		Client:  http.Client{},
+	}
+}
+
+func sharedHeaders() map[string]string {
+	return nil
 }
 
 type client struct {
@@ -93,6 +113,24 @@ func (c *client) Request(m Method, urlString string, parameters ...map[string]st
 	return &r
 }
 
-func (c *client) RequestAdapter(adapter func(req *http.Request) *http.Request) {
+func (c *client) RequestAdapter(adapter func(req *http.Request) *http.Request) Client {
 	c.requestAdapter = adapter
+	return c
+}
+
+func (c *client) HandleRedirect(flag bool) Client {
+	if flag {
+		c.Client.CheckRedirect = nil
+	} else {
+		c.Client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	}
+
+	return c
+}
+
+func (c *client) Header(k, v string) Client {
+	c.headers[k] = v
+	return c
 }
