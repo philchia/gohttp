@@ -3,6 +3,8 @@ package gohttp
 import (
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 )
 
 // Requester interface
@@ -14,21 +16,33 @@ type Requester interface {
 
 // request is the underlying struct which implement the Requester interface
 type request struct {
-	client  *client
-	err     error
-	request *http.Request
-	url     string
-	method  Method
-	header  http.Header
+	client    *client
+	url       string
+	method    Method
+	header    http.Header
+	parameter map[string]string
 }
 
 // ResponseString will do the request and response with string body
 func (r *request) ResponseString(handler func(code int, header http.Header, body string, err error)) {
-	if r.err != nil {
-		handler(0, nil, "", r.err)
+
+	postValue := url.Values{}
+
+	for k, v := range r.parameter {
+		postValue.Add(k, v)
+	}
+
+	req, err := http.NewRequest(r.method.String(), r.url, strings.NewReader(postValue.Encode()))
+	if err != nil {
+		handler(0, nil, "", err)
 		return
 	}
-	resp, err := r.client.Do(r.request)
+
+	if r.client.requestAdapter != nil {
+		req = r.client.requestAdapter(req)
+	}
+
+	resp, err := r.client.Do(req)
 	if err != nil {
 		handler(0, nil, "", err)
 		return
@@ -48,11 +62,23 @@ func (r *request) ResponseString(handler func(code int, header http.Header, body
 
 // ResponseData will do the request and response with bytes body
 func (r *request) ResponseData(handler func(code int, header http.Header, body []byte, err error)) {
-	if r.err != nil {
-		handler(0, nil, nil, r.err)
+	postValue := url.Values{}
+
+	for k, v := range r.parameter {
+		postValue.Add(k, v)
+	}
+
+	req, err := http.NewRequest(r.method.String(), r.url, strings.NewReader(postValue.Encode()))
+	if err != nil {
+		handler(0, nil, nil, err)
 		return
 	}
-	resp, err := r.client.Do(r.request)
+
+	if r.client.requestAdapter != nil {
+		req = r.client.requestAdapter(req)
+	}
+
+	resp, err := r.client.Do(req)
 	if err != nil {
 		handler(0, nil, nil, err)
 		return
@@ -72,11 +98,24 @@ func (r *request) ResponseData(handler func(code int, header http.Header, body [
 
 // Response will do the request and response Response interface
 func (r *request) Response(handler func(resp Responsor)) {
-	if r.err != nil {
-		handler(&response{err: r.err})
+
+	postValue := url.Values{}
+
+	for k, v := range r.parameter {
+		postValue.Add(k, v)
+	}
+
+	req, err := http.NewRequest(r.method.String(), r.url, strings.NewReader(postValue.Encode()))
+	if err != nil {
+		handler(&response{err: err})
 		return
 	}
-	resp, err := r.client.Do(r.request)
+
+	if r.client.requestAdapter != nil {
+		req = r.client.requestAdapter(req)
+	}
+
+	resp, err := r.client.Do(req)
 	if err != nil {
 		handler(&response{err: err})
 		return
@@ -90,6 +129,6 @@ func (r *request) Response(handler func(resp Responsor)) {
 		return
 	}
 
-	handler(&response{code: resp.StatusCode, body: bts, header: resp.Header, err: r.err})
+	handler(&response{code: resp.StatusCode, body: bts, header: resp.Header, err: nil})
 	return
 }
