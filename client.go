@@ -60,6 +60,7 @@ type Client interface {
 	Header(k, v string) Client
 }
 
+// NewClient create a client with custom headers
 func NewClient(headers ...map[string]string) Client {
 	var header map[string]string
 	if len(headers) > 0 {
